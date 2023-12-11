@@ -1,13 +1,5 @@
 package hdfs;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import io.AccessMode;
 import io.InitialNodeRW;
 import interfaces.KV;
@@ -52,7 +44,7 @@ public class HdfsClient {
 	public static void main(String[] args) {
 		// java HdfsClient <read|write> <txt|kv> <file>
 		// appel des méthodes précédentes depuis la ligne de commande
-		
+
 		if (args.length == 2 && args[0] == "read") {
 			HdfsRead(args[1]);
 			return;
