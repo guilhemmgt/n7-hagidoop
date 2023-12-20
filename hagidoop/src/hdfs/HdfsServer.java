@@ -16,9 +16,9 @@ public class HdfsServer {
     public void main(String[] args) throws IOException {
         ss = new ServerSocket(Integer.parseInt(args[0]));
         while (true) {
-            s = ss.accept ();
-            Slave slave = new Slave (s);
-            slave.start ();
+            s = ss.accept();
+            Slave slave = new Slave(s);
+            slave.start();
         }
     }
 }
@@ -26,15 +26,16 @@ public class HdfsServer {
 class Slave extends Thread {
     Socket emetteur;
 
-    public Slave (Socket emetteur) {
+    public Slave(Socket emetteur) {
         this.emetteur = emetteur;
     }
 
     @Override
     public void run() {
         try {
-            InputStreamReader in = new InputStreamReader(s.getInputStream());
-            String rq = new LineNumberReader(in).readLine();
+            InputStreamReader in = new InputStreamReader(emetteur.getInputStream());
+            String rq = new LineNumberReader(in).readLine(); // ma ligne
+
             // ...
         } catch (Exception e) {
 
