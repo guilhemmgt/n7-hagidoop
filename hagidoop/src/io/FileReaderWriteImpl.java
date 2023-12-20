@@ -2,6 +2,7 @@ package io;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -35,6 +36,12 @@ public class FileReaderWriteImpl implements FileReaderWriter {
     @Override
     public void setFname(String fname) {
         this.fName = fname;
+    }
+
+    @Override
+    public long getFsize() {
+        File file = new File (fName);
+        return file.length();
     }
 
     @Override

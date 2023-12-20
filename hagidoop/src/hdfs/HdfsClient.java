@@ -16,8 +16,6 @@ public class HdfsClient implements Runnable {
 	
 	public static String CONFIGNAME = "/config.txt";
 
-	private static List<KV> nodes = null;
-
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
 		System.out.println("Usage: java HdfsClient write <txt|kv> <file>");
@@ -37,36 +35,43 @@ public class HdfsClient implements Runnable {
 	 * @param fname : fichier lu sur le système de fichiers local
 	 */
 	public static void HdfsWrite(int fmt, String fname) {
-		// Squelette de code
-		nodes = Project.getConfig(CONFIGNAME);
-
-		// Savoir combien il y a de serveurs
+		// Récupère les noeuds
+		List<KV> nodes = Project.getConfig(CONFIGNAME);
 		int nbNodes = nodes.size();
 
-		long fileSize = Files.size(fname);
-
-		// Limite de taille par serv
-		// TO DO : savoir la taille du fichier pour savoir quand passer au serveur suivant
-		int fileSizePerServer = Math.ceil( /* taille du fichier */ / nbNodes);
-
-		int readSinceLastWrite = 0;
-		int sizePerNode = -1; // à implémenter : récup dans la config le nb de noeuds
-
+		// Instance du ReaderWriter
 		FileReaderWriteImpl rw = new FileReaderWriteImpl();
+
+		// Ouvre le fichier en lecture
 		rw.setFname(fname);
 		rw.open(AccessMode.READ);
+		long fileSize = rw.getFsize();
+	
+		// Bytes à écrire par noeud
+		long sizePerNode = fileSize / nbNodes;
+
+		// Noeud actuel
+		long writtenInCurrentNode = 0;
+		int nodeIndex = 0;
+
 		KV line;
 		while ((line = rw.read()) != null) {
-			readSinceLastWrite += line.v.getBytes().length;
+			writtenInCurrentNode += line.v.getBytes().length;
+			byte[] buffer = line.v.getBytes();
+			KV node = nodes.get(nodeIndex);
 
-			// on envoie line.v au serveur
-			Socket recepteur = new Socket ("melofee", 4000);
-			OutputStream recepteur_out = recepteur.getOutputStream ();
-			recepteur_out.write (buffer, 0, nb_lus);
+			try {
+				Socket recepteur = new Socket (node.k, Integer.parseInt(node.v));
+				OutputStream recepteur_out = recepteur.getOutputStream ();
+				recepteur_out.write (buffer, 0, buffer.length);
+				recepteur.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-			if (readSinceLastWrite >= sizePerNode) { // attention le dernier seuil on le dépasse pas
-				readSinceLastWrite = 0;
-				// on change de serveur
+			if (writtenInCurrentNode >= sizePerNode) {
+				writtenInCurrentNode = writtenInCurrentNode - sizePerNode;	// si on a trop écrit sur le noeud, on compense sur le prochain
+				nodeIndex++;
 			}
 		}
 

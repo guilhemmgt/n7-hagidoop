@@ -10,4 +10,5 @@ public interface FileReaderWriter extends ReaderWriter {
 	public long getIndex();
 	public String getFname();
 	public void setFname(String fname);
+	public long getFsize();	// rajouté par nous
 }
