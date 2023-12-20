@@ -1,14 +1,16 @@
 package io;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import interfaces.FileReaderWriter;
 import interfaces.KV;
 
-public class InitialNodeRW implements FileReaderWriter {
+public class FileReaderWriteImpl implements FileReaderWriter {
     // Nom du fichier
     private String fName = "";
     // Indice de la prochaine ligne à lire
@@ -18,6 +20,7 @@ public class InitialNodeRW implements FileReaderWriter {
     private AccessMode accessMode = AccessMode.NONE;
     
     private BufferedReader reader = null;
+    private BufferedWriter writer = null;
 
     @Override
     public long getIndex() {
@@ -55,9 +58,16 @@ public class InitialNodeRW implements FileReaderWriter {
 
     @Override
     public void write(KV record) {
-        // cf haut page 3 du sujet : on n'implémentera pas l'écriture du HDFS dans le FS
-        // donc je suppose qu'on n'implémente même pas write ?
-        System.out.println("Impossible d'écrire dans le noeud initial");
+        if (accessMode != AccessMode.WRITE) {
+            System.out.println("Fichier non ouvert en écriture");
+        }
+
+        try {
+		    writer.write(record.k + "\n");
+            writer.write(record.v + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -65,19 +75,26 @@ public class InitialNodeRW implements FileReaderWriter {
         switch (mode) {
             case READ:   // ouverture en lecture
                 try {
-                    FileReader fileReader = null;
-                    fileReader = new FileReader(fName);
+                    FileReader fileReader = new FileReader(fName);
                     reader = new BufferedReader(fileReader);
                     accessMode = mode;
+                    index = 0;
                 } catch (FileNotFoundException e) {
                     System.out.println("Fichier non trouvé: " + fName);
                     e.printStackTrace();
                 }
                 break;
             case WRITE:   // ouverture en écriture
-                // même remarque que dans write
-                System.out.println("Impossible d'écrire dans le noeud initial");
-                accessMode = mode;
+                try {
+                    FileWriter fileWriter = new FileWriter(fName);
+                    writer = new BufferedWriter(fileWriter);
+                    accessMode = mode;
+                } catch (FileNotFoundException e) {
+                    System.out.println("Fichier non trouvé: " + fName);
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case NONE:    // fermeture
                 close();
@@ -92,18 +109,22 @@ public class InitialNodeRW implements FileReaderWriter {
                 try {
                     reader.close();
                     reader = null;
+                    accessMode = AccessMode.NONE;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 break;
             case WRITE:   // fermeture en écriture
-                // même remarque que dans write
+                try {
+                    writer.close();
+                    writer = null;
+                    accessMode = AccessMode.NONE;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case NONE:   // déjà fermé
                 break;
         }
-
-        index = 0;
-        accessMode = AccessMode.NONE;
     }
 }
