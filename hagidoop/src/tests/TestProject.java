@@ -12,7 +12,6 @@ public class TestProject {
 
     public static void main(String[] args) {
         testConfig();
-        System.out.println("Config ok");
     }
 
     public static void testConfig() {

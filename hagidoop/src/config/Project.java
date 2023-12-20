@@ -8,14 +8,16 @@ import java.util.*;
 import interfaces.KV;
 
 public class Project {
-	public static String PATH = "../../.."; // dossier hagidoop
+	public static String PATH = ".."; // dossier hagidoop
 
-	
 	/**
-	 * Methode pour recuperer un fichier config.txt et renvoyer sous la forme d'une liste de paire de KV
+	 * Methode pour recuperer un fichier config.txt present dans le dossier config
+	 * et renvoyer sous la forme d'une liste de paire de KV
 	 *
-	 * @param configName : le nom du fichier config present dans src/config/ que l'on souhaite utiliser
-	 * @return kvList : la liste des kv de config (sous la forme adresseMachine, numero de port)
+	 * @param configName : le nom du fichier config present dans src/config/ que
+	 *                   l'on souhaite utiliser
+	 * @return kvList : la liste des kv de config (sous la forme adresseMachine,
+	 *         numero de port)
 	 */
 	public static List<KV> getConfig(String configName) throws FileNotFoundException {
 		File file = new File(PATH + "/config/" + configName);
