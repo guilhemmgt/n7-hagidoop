@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import config.Project;
+import interfaces.FileReaderWriter;
 import interfaces.KV;
 
 public class HdfsClient /*implements Runnable*/ {
@@ -96,13 +97,9 @@ public class HdfsClient /*implements Runnable*/ {
 		if (args.length == 2 && args[0].equals("read")) {
 			HdfsRead(args[1]);
 			return;
-		} else if (args.length == 3 && args[0].equals("write")) {
-			try {
-				HdfsWrite(Integer.parseInt(args[1]), args[2]);
-				return;
-			} catch (NumberFormatException e) {
-				e.printStackTrace();
-			}
+		} else if (args.length == 3 && args[0].equals("write") && (args[1].equals("txt") || args[1].equals("kv"))) {
+			int fmt = args[1] == "txt" ? FileReaderWriter.FMT_TXT : FileReaderWriter.FMT_KV;
+			HdfsWrite(fmt, args[2]);
 		} else if (args.length == 2 && args[0].equals("delete")) {
 			HdfsDelete(args[1]);
 			return;
