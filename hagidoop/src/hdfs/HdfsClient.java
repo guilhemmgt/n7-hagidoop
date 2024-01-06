@@ -82,7 +82,6 @@ public class HdfsClient implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		// java HdfsClient <read|write> <txt|kv> <file>
 		// appel des méthodes précédentes depuis la ligne de commande
 
 		if (args.length == 2 && args[0] == "read") {
@@ -95,6 +94,7 @@ public class HdfsClient implements Runnable {
 			} catch (NumberFormatException e) {}
 		} else if (args.length == 2 && args[0] == "delete") {
 			HdfsDelete(args[1]);
+			return;
 		}
 
 		usage();
