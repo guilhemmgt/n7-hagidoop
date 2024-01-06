@@ -6,14 +6,14 @@ import java.io.LineNumberReader;
 import java.net.*;
 
 public class HdfsServer {
-    private Socket s;
-    private ServerSocket ss;
+    private static Socket s;
+    private static ServerSocket ss;
 
     public HdfsServer(Socket s) {
         this.s = s;
     }
 
-    public void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         ss = new ServerSocket(Integer.parseInt(args[0]));
         while (true) {
             s = ss.accept();
@@ -37,6 +37,7 @@ class Slave extends Thread {
             String rq = new LineNumberReader(in).readLine(); // ma ligne
 
             // ...
+            System.out.println("Je suis un serveur et j'ai reçu: " + rq);
         } catch (Exception e) {
 
         }

@@ -1,0 +1,6 @@
+Ceci est la ligne 1
+Ici est la ligne 2
+Par là se trouve la troisième ligne
+Et enfin nous sommes à la quatrième et dernière
+
+Ou pas !
