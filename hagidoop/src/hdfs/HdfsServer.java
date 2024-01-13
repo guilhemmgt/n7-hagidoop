@@ -60,9 +60,9 @@ public class HdfsServer implements Runnable {
             // Écris chaque ligne reçue (de la forme "n°_de_ligne<->ligne")
             String received;
             while ((received = lnr.readLine()) != null) {
-                String[] parsed_received = received.split(KV.SEPARATOR); // [n°_de_ligne, ligne]
-                KV kv_received = new KV(parsed_received[0], parsed_received[1]); // n°_de_ligne<->ligne
-                rw.write(kv_received); // Écris
+                String[] parsed = received.split(KV.SEPARATOR, 2); // [n°_de_ligne, ligne]
+                KV kv = new KV(parsed[0], parsed[1]); // n°_de_ligne<->ligne
+                rw.write(kv); // Écris
             }
 
             // Ferme le ReaderWriter
