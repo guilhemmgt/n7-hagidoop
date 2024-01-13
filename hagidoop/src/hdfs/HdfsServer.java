@@ -61,7 +61,11 @@ public class HdfsServer implements Runnable {
 
                 // Ferme le ReaderWriter
                 rw.close();
-            } else {
+            } 
+            else if (request.startsWith(HdfsClient.DELETE_RQ)) { // Supprimer un fragment de HDFS
+                DeleteFile(request.substring(HdfsClient.DELETE_RQ.length()));
+            }
+            else { // non reconnu
                 System.out.println("Requete inconnue: " + request);
             }
         } catch (Exception e) {
@@ -69,7 +73,7 @@ public class HdfsServer implements Runnable {
         }
     }
 
-    private void SetFile (String fileName) {
+    private void SetFile(String fileName) {
         // Accède au fichier du fragment
         Path pathToFragment = pathToServerDir.resolve(fileName);
         File fragment = pathToFragment.toFile();
@@ -83,6 +87,15 @@ public class HdfsServer implements Runnable {
         // Ouvre le fichier en écriture
         rw.setFname(pathToFragment.toString());
         rw.open(AccessMode.WRITE);
+    }
+
+    private void DeleteFile(String fileName) {
+        // Accède au fichier du fragment
+        Path pathToFragment = pathToServerDir.resolve(fileName);
+        File fragment = pathToFragment.toFile();
+        
+        // Supprime le fichier
+        fragment.delete();
     }
 
     public static void main(String[] args) {

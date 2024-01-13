@@ -18,8 +18,10 @@ import interfaces.KV;
 public class HdfsClient {
 	// La première ligne de chaque socket envoyée à un HdfsServer lui indique la nature de la requête
 	public static final String WRITE_RQ = "WRITE:";
+	public static final String DELETE_RQ = "DELETE:";
 	
-	private static String CONFIGNAME = "/config.txt";
+	private static final String CONFIGNAME = "/config.txt";
+
 	private static FileReaderWriter frw = new FileReaderWriteImpl();
 
 	private static void usage() {
@@ -29,6 +31,31 @@ public class HdfsClient {
 	}
 	
 	public static void HdfsDelete(String fname) {
+		// Récupère les noeuds via le fichier config
+		List<KV> nodes = new ArrayList<KV>();
+		try {
+			nodes = Project.getConfig(CONFIGNAME);
+		} catch (FileNotFoundException e) {
+			System.out.println("Fichier de configuration non trouvé: " + CONFIGNAME);
+			return;
+		}
+
+		String fileRealName = Paths.get(fname).getFileName().toString(); // Le nom du fichier
+
+		for (int i = 0; i <  nodes.size(); i++) {
+			try {
+				KV node = nodes.get(i);
+				Socket recepteur = new Socket (node.k, Integer.parseInt(node.v));
+				OutputStream recepteur_out = recepteur.getOutputStream ();
+
+				byte[] buffer = (DELETE_RQ + fileRealName + "\n").getBytes();
+				recepteur_out.write (buffer, 0, buffer.length);
+				
+				recepteur.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
@@ -50,14 +77,13 @@ public class HdfsClient {
 			System.out.println("Fichier de configuration non trouvé: " + CONFIGNAME);
 			return;
 		}
-		int nbNodes = nodes.size();
 
 		// Ouvre le fichier en lecture
 		frw.setFname(fname);
 		frw.open(AccessMode.READ);
 	
 		String fileRealName = Paths.get(fname).getFileName().toString(); // Le nom du fichier
-		long sizePerNode = Math.ceilDiv(frw.getFsize(), nbNodes); // Bytes à écrire par noeud
+		long sizePerNode = Math.ceilDiv(frw.getFsize(), nodes.size()); // Bytes à écrire par noeud
 		long written = 0; // Bytes écrits sur tous les noeuds
 		int nodeIndex = 0; // Noeud courant
 
