@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,8 @@ import interfaces.FileReaderWriter;
 import interfaces.KV;
 
 public class HdfsClient {
+	// La première ligne de chaque socket envoyée à un HdfsServer lui indique la nature de la requête
+	public static final String WRITE_RQ = "WRITE:";
 	
 	private static String CONFIGNAME = "/config.txt";
 	private static FileReaderWriter frw = new FileReaderWriteImpl();
@@ -44,7 +47,7 @@ public class HdfsClient {
 		try {
 			nodes = Project.getConfig(CONFIGNAME);
 		} catch (FileNotFoundException e) {
-			System.out.println("Fichier non trouvé: " + fname);
+			System.out.println("Fichier de configuration non trouvé: " + CONFIGNAME);
 			return;
 		}
 		int nbNodes = nodes.size();
@@ -53,6 +56,7 @@ public class HdfsClient {
 		frw.setFname(fname);
 		frw.open(AccessMode.READ);
 	
+		String fileRealName = Paths.get(fname).getFileName().toString(); // Le nom du fichier
 		long sizePerNode = Math.ceilDiv(frw.getFsize(), nbNodes); // Bytes à écrire par noeud
 		long written = 0; // Bytes écrits sur tous les noeuds
 		int nodeIndex = 0; // Noeud courant
@@ -67,6 +71,9 @@ public class HdfsClient {
 					KV node = nodes.get(nodeIndex); // noeud sur lequel écrire: host<->port
 					recepteur = new Socket (node.k, Integer.parseInt(node.v));
 					recepteur_out = recepteur.getOutputStream ();
+
+					byte[] buffer = (WRITE_RQ + fileRealName + "\n").getBytes();
+					recepteur_out.write (buffer, 0, buffer.length);
 				}
 
 				// Envoi au noeud

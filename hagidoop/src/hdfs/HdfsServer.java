@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import interfaces.FileReaderWriter;
 import interfaces.KV;
@@ -14,8 +16,9 @@ import io.FileReaderWriteImpl;
 public class HdfsServer implements Runnable {
     private Socket s;
     private static FileReaderWriter rw = new FileReaderWriteImpl();
+    private static Path pathToServerDir;
 
-    public HdfsServer(Socket s) {
+    private HdfsServer(Socket s) {
         this.s = s;
     }
 
@@ -23,22 +26,10 @@ public class HdfsServer implements Runnable {
 		System.out.println("Usage: java HdsfServer <port> <path>");
 	}
 
-    public static void Start(int port, String hdfsDirectoryPath) {
+    private static void Start(int port) {
         try {
             ServerSocket ss = new ServerSocket(port);
 
-            // Accède au fichier du fragment
-            // TODO robustesse du path
-            // TODO gérer le nom du fichier
-            String filePath = hdfsDirectoryPath + (hdfsDirectoryPath.endsWith("\\") ? "" : "\\") + "fragment.txt";
-            File file = new File(filePath);
-            file.getParentFile().mkdir(); // Créer le répertoire si il n'existe pas
-            file.createNewFile(); // Créer le fichier si il n'existe pas
-
-            // Ouvre le fichier en écriture
-            rw.setFname(filePath);
-            
-            // Écoute
             while (true) {
                 new Thread(new HdfsServer(ss.accept())).start();
             }
@@ -53,28 +44,51 @@ public class HdfsServer implements Runnable {
             // Récupère la ligne
             InputStreamReader in = new InputStreamReader(s.getInputStream());
             LineNumberReader lnr = new LineNumberReader(in);
+            String request = lnr.readLine();
 
-            // Ouvre le ReaderWriter
-            rw.open(AccessMode.WRITE);
+            // Identifie la requête
+            if (request.startsWith(HdfsClient.WRITE_RQ)) { // Écrire un fragment dans HDFS
+                // Créé le fichier du fragment et ouvre le FileReaderWriter
+                SetFile(request.substring(HdfsClient.WRITE_RQ.length()));
 
-            // Écris chaque ligne reçue (de la forme "n°_de_ligne<->ligne")
-            String received;
-            while ((received = lnr.readLine()) != null) {
-                String[] parsed = received.split(KV.SEPARATOR, 2); // [n°_de_ligne, ligne]
-                KV kv = new KV(parsed[0], parsed[1]); // n°_de_ligne<->ligne
-                rw.write(kv); // Écris
+                // Écris chaque ligne reçue (de la forme "n°_de_ligne<->ligne")
+                String received;
+                while ((received = lnr.readLine()) != null) {
+                    String[] parsed = received.split(KV.SEPARATOR, 2); // [n°_de_ligne, ligne]
+                    KV kv = new KV(parsed[0], parsed[1]); // n°_de_ligne<->ligne
+                    rw.write(kv); // Écris
+                }
+
+                // Ferme le ReaderWriter
+                rw.close();
+            } else {
+                System.out.println("Requete inconnue: " + request);
             }
-
-            // Ferme le ReaderWriter
-            rw.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private void SetFile (String fileName) {
+        // Accède au fichier du fragment
+        Path pathToFragment = pathToServerDir.resolve(fileName);
+        File fragment = pathToFragment.toFile();
+        fragment.getParentFile().mkdir(); // Créer le répertoire si il n'existe pas
+        try {
+            fragment.createNewFile(); // Créer le fichier si il n'existe pas
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Ouvre le fichier en écriture
+        rw.setFname(pathToFragment.toString());
+        rw.open(AccessMode.WRITE);
+    }
+
     public static void main(String[] args) {
         if (args.length == 2) {
-            Start (Integer.parseInt(args[0]), args[1]);
+            pathToServerDir = Paths.get(args[1]);
+            Start (Integer.parseInt(args[0]));
         } else {
             usage();
         }
