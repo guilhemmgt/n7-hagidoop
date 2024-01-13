@@ -14,6 +14,7 @@ import java.util.List;
 import config.Project;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
+import interfaces.ReaderWriter;
 
 public class HdfsClient {
 	// La première ligne de chaque socket envoyée à un HdfsServer lui indique la nature de la requête
@@ -72,8 +73,6 @@ public class HdfsClient {
 	 * @param fname : fichier lu sur le système de fichiers local
 	 */
 	public static void HdfsWrite(int fmt, String fname) {
-		// TODO : gérer les formats
-
 		// Récupère les noeuds via le fichier config
 		List<KV> nodes = new ArrayList<KV>();
 		try {
@@ -95,7 +94,7 @@ public class HdfsClient {
 		try {
 			Socket recepteur = null;
 			OutputStream recepteur_out = null;
-			KV line = null;
+			KV line = null; // n°_de_ligne<->ligne_du_fichier
 			while ((line = frw.read()).v != null) {
 				// Si pas de socket ouvert, création d'un socket
 				if (recepteur == null || recepteur.isClosed()) {
@@ -108,7 +107,8 @@ public class HdfsClient {
 				}
 
 				// Envoi au noeud
-				byte[] buffer = (line.k + KV.SEPARATOR + line.v + "\n").getBytes(); // "n°_de_ligne<->ligne"
+				String content = (fmt == FileReaderWriter.FMT_TXT) ? line.k + KV.SEPARATOR + line.v : line.v;
+				byte[] buffer = (content + "\n").getBytes();
 				recepteur_out.write (buffer, 0, buffer.length);
 				written += line.v.getBytes().length;
 				
