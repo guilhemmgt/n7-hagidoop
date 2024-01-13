@@ -4,6 +4,7 @@ import io.AccessMode;
 import io.FileReaderWriteImpl;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -13,9 +14,10 @@ import config.Project;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
 
-public class HdfsClient /*implements Runnable*/ {
+public class HdfsClient {
 	
-	public static String CONFIGNAME = "/config.txt";
+	private static String CONFIGNAME = "/config.txt";
+	private static FileReaderWriter frw = new FileReaderWriteImpl();
 
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -47,45 +49,47 @@ public class HdfsClient /*implements Runnable*/ {
 		}
 		int nbNodes = nodes.size();
 
-		// Instance du ReaderWriter
-		FileReaderWriteImpl rw = new FileReaderWriteImpl();
-
 		// Ouvre le fichier en lecture
-		rw.setFname(fname);
-		rw.open(AccessMode.READ);
-		long fileSize = rw.getFsize();
+		frw.setFname(fname);
+		frw.open(AccessMode.READ);
 	
-		// Bytes à écrire par noeud
-		long sizePerNode = fileSize / nbNodes;
+		long sizePerNode = Math.ceilDiv(frw.getFsize(), nbNodes); // Bytes à écrire par noeud
+		long written = 0; // Bytes écrits sur tous les noeuds
+		int nodeIndex = 0; // Noeud courant
 
-		// Noeud actuel
-		long writtenInCurrentNode = 0;
-		int currentNodeIndex = 0;
+		try {
+			Socket recepteur = null;
+			OutputStream recepteur_out = null;
+			KV line = null;
+			while ((line = frw.read()).v != null) {
+				// Si pas de socket ouvert, création d'un socket
+				if (recepteur == null || recepteur.isClosed()) {
+					KV node = nodes.get(nodeIndex); // noeud sur lequel écrire: host<->port
+					recepteur = new Socket (node.k, Integer.parseInt(node.v));
+					recepteur_out = recepteur.getOutputStream ();
+				}
 
-		KV line;
-		while ((line = rw.read()).v != null) {
-			byte[] buffer = line.v.getBytes(); // texte à écrire
-			KV node = nodes.get(currentNodeIndex); // noeud sur lequel écrire
-
-			// Écriture
-			try {
-				Socket recepteur = new Socket (node.k, Integer.parseInt(node.v));
-				OutputStream recepteur_out = recepteur.getOutputStream ();
+				// Envoi au noeud
+				byte[] buffer = (line.k + KV.SEPARATOR + line.v + "\n").getBytes(); // "n°_de_ligne<->ligne"
 				recepteur_out.write (buffer, 0, buffer.length);
-				writtenInCurrentNode += buffer.length;
-				recepteur.close();
-			} catch (Exception e) {
-				e.printStackTrace();
+				written += line.v.getBytes().length;
+				
+				// Noeud rempli, fermeture du socket
+				if (written >= sizePerNode * (nodeIndex + 1)) {
+					recepteur.close();
+					nodeIndex++;
+				}
 			}
 
-			// Changement de noeud
-			if (writtenInCurrentNode >= sizePerNode) {
-				writtenInCurrentNode = writtenInCurrentNode - sizePerNode;	// si on a trop écrit sur le noeud, on compense sur le prochain
-				currentNodeIndex++;
-			}
+			// Le dernier noeud n'est vraisemblablement pas rempli, on ferme son socket ici
+			if (!recepteur.isClosed()) { 
+				recepteur.close(); 
+			}	
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
-		rw.close();
+		frw.close();
 	}
 
 	public static void HdfsRead(String fname) {
@@ -94,23 +98,15 @@ public class HdfsClient /*implements Runnable*/ {
 	public static void main(String[] args) {
 		// appel des méthodes précédentes depuis la ligne de commande
 
-		if (args.length == 2 && args[0].equals("read")) {
+		if (args.length == 2 && args[0].equals("read")) { // read
 			HdfsRead(args[1]);
-			return;
-		} else if (args.length == 3 && args[0].equals("write") && (args[1].equals("txt") || args[1].equals("kv"))) {
-			int fmt = args[1] == "txt" ? FileReaderWriter.FMT_TXT : FileReaderWriter.FMT_KV;
+		} else if (args.length == 3 && args[0].equals("write") && (args[1].equals("txt") || args[1].equals("kv"))) { // write
+			int fmt = args[1].equals("txt") ? FileReaderWriter.FMT_TXT : FileReaderWriter.FMT_KV;
 			HdfsWrite(fmt, args[2]);
-		} else if (args.length == 2 && args[0].equals("delete")) {
+		} else if (args.length == 2 && args[0].equals("delete")) { // delete
 			HdfsDelete(args[1]);
-			return;
+		} else { // non reconnu
+			usage();
 		}
-
-		usage();
 	}
-
-	/*@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'run'");
-	}*/
 }

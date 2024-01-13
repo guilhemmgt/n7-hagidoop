@@ -53,7 +53,7 @@ public class FileReaderWriteImpl implements FileReaderWriter {
 
         try {
 		    String line = reader.readLine();
-            KV kv = new KV(Integer.toString(index), line);
+            KV kv = new KV(Integer.toString(index), line); // index<->ligne
             index++;
             return kv;
         } catch (IOException e) {
@@ -67,11 +67,12 @@ public class FileReaderWriteImpl implements FileReaderWriter {
     public void write(KV record) {
         if (accessMode != AccessMode.WRITE) {
             System.out.println("Fichier non ouvert en écriture");
+            return;
         }
 
         try {
-		    writer.write(record.k + "\n");
-            writer.write(record.v + "\n");
+		    writer.write(record.k + KV.SEPARATOR + record.v + "\n"); // "key<->valeur\n"
+            index++;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,13 +80,19 @@ public class FileReaderWriteImpl implements FileReaderWriter {
 
     @Override
     public void open(AccessMode mode) {
+        if (accessMode != AccessMode.NONE) {
+            System.out.println("Déjà ouvert");
+            return;
+        }
+
+        index = 0;
+        
         switch (mode) {
             case READ:   // ouverture en lecture
                 try {
                     FileReader fileReader = new FileReader(fName);
                     reader = new BufferedReader(fileReader);
                     accessMode = mode;
-                    index = 0;
                 } catch (FileNotFoundException e) {
                     System.out.println("Fichier non trouvé: " + fName);
                     e.printStackTrace();
