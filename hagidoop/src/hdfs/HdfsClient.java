@@ -30,6 +30,11 @@ public class HdfsClient {
 		System.out.println("Usage: java HdfsClient delete <file>");
 	}
 	
+	/**
+	 * Permet de supprimer les fragments d'un fichier stocké dans HDFS
+	 * 
+	 * @param fname : fichier à effacer
+	 */
 	public static void HdfsDelete(String fname) {
 		// Récupère les noeuds via le fichier config
 		List<KV> nodes = new ArrayList<KV>();
