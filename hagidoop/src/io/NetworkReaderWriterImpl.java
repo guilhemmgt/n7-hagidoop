@@ -16,7 +16,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private ServerSocket serverSocket;  // Ajout du ServerSocket
+    private ServerSocket serverSocket;
     private BlockingQueue<KV> sharedQueue;
 
     /**
