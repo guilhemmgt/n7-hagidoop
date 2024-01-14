@@ -24,7 +24,8 @@ public class MyMapReduce implements MapReduce {
 				else hm.put(tok, 1);
 			}
 		}
-		for (String k : hm.keySet()) writer.write(new KV(k,hm.get(k).toString()));
+		// for (String k : hm.keySet()) writer.write(new KV(k,hm.get(k).toString()));
+		for (String k : hm.keySet()) System.out.println(new KV(k,hm.get(k).toString())); // TODO enlever ça
 	}
 
 	public void reduce(Reader reader, Writer writer) {

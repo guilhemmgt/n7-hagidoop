@@ -15,7 +15,7 @@ import io.FileReaderWriteImpl;
 
 public class HdfsServer implements Runnable {
     private Socket s;
-    private static FileReaderWriter rw = new FileReaderWriteImpl();
+    private static FileReaderWriter frw = new FileReaderWriteImpl(FileReaderWriter.FMT_TXT);
     private static Path pathToServerDir;
 
     private HdfsServer(Socket s) {
@@ -56,11 +56,11 @@ public class HdfsServer implements Runnable {
                 while ((received = lnr.readLine()) != null) {
                     String[] parsed = received.split(KV.SEPARATOR, 2); // [n°_de_ligne, ligne]
                     KV kv = new KV(parsed[0], parsed[1]); // n°_de_ligne<->ligne
-                    rw.write(kv); // Écris
+                    frw.write(kv); // Écris
                 }
 
                 // Ferme le ReaderWriter
-                rw.close();
+                frw.close();
             } 
             else if (request.startsWith(HdfsClient.DELETE_RQ)) { // Supprimer un fragment de HDFS
                 DeleteFile(request.substring(HdfsClient.DELETE_RQ.length()));
@@ -85,8 +85,8 @@ public class HdfsServer implements Runnable {
         }
 
         // Ouvre le fichier en écriture
-        rw.setFname(pathToFragment.toString());
-        rw.open(AccessMode.WRITE);
+        frw.setFname(pathToFragment.toString());
+        frw.open(AccessMode.WRITE);
     }
 
     private void DeleteFile(String fileName) {

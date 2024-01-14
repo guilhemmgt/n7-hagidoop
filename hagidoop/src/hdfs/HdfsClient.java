@@ -14,16 +14,15 @@ import java.util.List;
 import config.Project;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
-import interfaces.ReaderWriter;
 
 public class HdfsClient {
 	// La première ligne de chaque socket envoyée à un HdfsServer lui indique la nature de la requête
 	public static final String WRITE_RQ = "WRITE:";
 	public static final String DELETE_RQ = "DELETE:";
 	
-	private static final String CONFIGNAME = "/config.txt";
+	public static final String CONFIGNAME = "/config.txt";
 
-	private static FileReaderWriter frw = new FileReaderWriteImpl();
+	private static FileReaderWriter frw = new FileReaderWriteImpl(FileReaderWriter.FMT_TXT);
 
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -95,7 +94,7 @@ public class HdfsClient {
 			Socket recepteur = null;
 			OutputStream recepteur_out = null;
 			KV line = null; // n°_de_ligne<->ligne_du_fichier
-			while ((line = frw.read()).v != null) {
+			while ((line = frw.read()) != null) {
 				// Si pas de socket ouvert, création d'un socket
 				if (recepteur == null || recepteur.isClosed()) {
 					KV node = nodes.get(nodeIndex); // noeud sur lequel écrire: host<->port
