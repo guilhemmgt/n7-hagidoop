@@ -23,6 +23,12 @@ public class FileReaderWriteImpl implements FileReaderWriter {
     private BufferedReader reader = null;
     private BufferedWriter writer = null;
 
+    private int fmt = FMT_TXT;
+    
+    public FileReaderWriteImpl (int fmt) {
+        this.fmt = fmt;
+    }
+
     @Override
     public long getIndex() {
         return this.index;
@@ -53,6 +59,10 @@ public class FileReaderWriteImpl implements FileReaderWriter {
 
         try {
 		    String line = reader.readLine();
+            if (line == null)
+                return null;
+            if (fmt == FMT_KV)
+                line = line.split(KV.SEPARATOR, 2)[1];
             KV kv = new KV(Integer.toString(index), line); // index<->ligne
             index++;
             return kv;
