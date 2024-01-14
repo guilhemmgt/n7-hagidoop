@@ -6,11 +6,14 @@ import interfaces.NetworkReaderWriter;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Implémentation de l'interface NetworkReaderWriter pour gérer la communication sur un réseau.
+ * Implémentation de l'interface NetworkReaderWriter pour gérer la communication
+ * sur un réseau.
  */
 public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private Socket socket;
@@ -18,9 +21,11 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private ObjectOutputStream objectOutputStream;
     private ServerSocket serverSocket;
     private BlockingQueue<KV> sharedQueue;
+    private List<Thread> receiverThreads = new ArrayList<>();
 
     /**
-     * Constructeur pour initialiser NetworkReaderWriterImpl avec un Socket et un ServerSocket.
+     * Constructeur pour initialiser NetworkReaderWriterImpl avec un Socket et un
+     * ServerSocket.
      *
      * @param socket       Le socket client.
      * @param serverSocket Le socket serveur.
@@ -39,7 +44,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
-/**
+    /**
      * Ouvre le serveur pour les connexions entrantes.
      */
     @Override
@@ -52,25 +57,30 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void openClient() {
-        // L'ouverture du client peut être implémentée si nécessaire
-        // Pour cet exemple, nous n'avons pas besoin de faire quelque chose ici
+        // Déjà dans le constructeur ?
     }
 
     /**
-     * Accepte une connexion entrante et retourne un nouvel objet NetworkReaderWriterImpl pour la communication.
+     * Accepte une connexion entrante et retourne un nouvel objet
+     * NetworkReaderWriterImpl pour la communication.
      *
-     * @return Une nouvelle instance de NetworkReaderWriterImpl pour le client accepté.
+     * @return Une nouvelle instance de NetworkReaderWriterImpl pour le client
+     *         accepté.
      */
     @Override
     public NetworkReaderWriter accept() {
-        // Accepter une connexion entrante et retourner un nouvel objet NetworkReaderWriterImpl
+        // Accepter une connexion entrante et retourner un nouvel objet
+        // NetworkReaderWriterImpl
         try {
             Socket clientSocket = serverSocket.accept();
             NetworkReaderWriterImpl newConnection = new NetworkReaderWriterImpl(clientSocket, serverSocket);
 
-            // Créer un nouveau thread Receiver pour la nouvelle connexion
+            // Créer un nouveau thread Receiver pour la nouvelle connexion et l'ajouter dans
+            // la liste
             Receiver receiver = new Receiver(newConnection);
-            new Thread(receiver).start();
+            Thread thread = new Thread(receiver);
+            receiverThreads.add(thread);
+            thread.start();
 
             return newConnection;
         } catch (IOException e) {
@@ -132,7 +142,17 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     }
 
     /**
-     * Écrit un objet KV dans le flux de sortie.
+     * Arrêter tous les threads Receiver.
+     */
+    public void stopReceiverThreads() {
+        for (Thread thread : receiverThreads) {
+            thread.interrupt();
+        }
+        receiverThreads.clear();
+    }
+
+    /**
+     * Écrire un objet KV dans le flux de sortie.
      *
      * @param record L'objet KV à écrire.
      */
@@ -172,12 +192,13 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
                 KV kv = connection.read();
                 if (kv == null || (kv.k == null && kv.v == null)) {
                     // Fin de la lecture, ajouter le marqueur de fin dans la queue
-                    sharedQueue.offer(new KV(null, null));
+                    connection.signalEnd();  // Ajouter cet appel pour signaler explicitement la fin
                     break;
                 } else {
                     sharedQueue.offer(kv);
                 }
             }
         }
+        
     }
 }
