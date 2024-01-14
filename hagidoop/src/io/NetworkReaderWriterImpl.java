@@ -16,8 +16,8 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private Socket socket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private ServerSocket serverSocket;
-    private final BlockingQueue<KV> sharedQueue;
+    private ServerSocket serverSocket;  // Ajout du ServerSocket
+    private BlockingQueue<KV> sharedQueue;
 
     /**
      * Constructeur pour initialiser NetworkReaderWriterImpl avec un Socket et un ServerSocket.
@@ -39,7 +39,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
-    /**
+/**
      * Ouvre le serveur pour les connexions entrantes.
      */
     @Override
@@ -52,7 +52,8 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void openClient() {
-        // Déjà dans le constructeur ?
+        // L'ouverture du client peut être implémentée si nécessaire
+        // Pour cet exemple, nous n'avons pas besoin de faire quelque chose ici
     }
 
     /**
@@ -62,9 +63,16 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public NetworkReaderWriter accept() {
+        // Accepter une connexion entrante et retourner un nouvel objet NetworkReaderWriterImpl
         try {
             Socket clientSocket = serverSocket.accept();
-            return new NetworkReaderWriterImpl(clientSocket, serverSocket);
+            NetworkReaderWriterImpl newConnection = new NetworkReaderWriterImpl(clientSocket, serverSocket);
+
+            // Créer un nouveau thread Receiver pour la nouvelle connexion
+            Receiver receiver = new Receiver(newConnection);
+            new Thread(receiver).start();
+
+            return newConnection;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -76,6 +84,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void closeServer() {
+        // Fermeture du serveur et du ServerSocket
         try {
             if (socket != null) {
                 socket.close();
@@ -93,6 +102,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void closeClient() {
+        // Fermer la connexion client
         try {
             if (socket != null) {
                 socket.close();
@@ -109,6 +119,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public KV read() {
+        // Lecture d'un objet KV depuis le flux d'entrée
         try {
             return (KV) objectInputStream.readObject();
         } catch (EOFException e) {
@@ -127,6 +138,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void write(KV record) {
+        // Écriture d'un objet KV dans le flux de sortie
         try {
             objectOutputStream.writeObject(record);
             objectOutputStream.flush();
@@ -135,19 +147,37 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
-    /**
-     * Signale la fin de la lecture en écrivant un objet KV spécial dans le flux de sortie.
-     */
+    // Méthode pour signaler la fin de la lecture
     public void signalEnd() {
         write(new KV(null, null));
     }
 
-    /**
-     * Obtient la référence vers la BlockingQueue.
-     *
-     * @return L'instance de BlockingQueue.
-     */
+    // Méthode pour obtenir la référence de la BlockingQueue
     public BlockingQueue<KV> getQueue() {
         return sharedQueue;
+    }
+
+    // Classe interne pour le Receiver (thread)
+    private class Receiver implements Runnable {
+        private NetworkReaderWriterImpl connection;
+
+        public Receiver(NetworkReaderWriterImpl connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                // Lire les KV et les mettre dans la BlockingQueue
+                KV kv = connection.read();
+                if (kv == null || (kv.k == null && kv.v == null)) {
+                    // Fin de la lecture, ajouter le marqueur de fin dans la queue
+                    sharedQueue.offer(new KV(null, null));
+                    break;
+                } else {
+                    sharedQueue.offer(kv);
+                }
+            }
+        }
     }
 }
