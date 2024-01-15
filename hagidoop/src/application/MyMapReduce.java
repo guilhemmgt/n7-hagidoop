@@ -25,7 +25,12 @@ public class MyMapReduce implements MapReduce {
 			}
 		}
 		// for (String k : hm.keySet()) writer.write(new KV(k,hm.get(k).toString()));
-		for (String k : hm.keySet()) System.out.println(new KV(k,hm.get(k).toString())); // TODO enlever ça
+
+		// TODO enlever ça
+		/**/	for (String k : hm.keySet()) {
+		/**/		System.out.println("writing: " + new KV(k,hm.get(k).toString()));
+		/**/		writer.write(new KV(k,hm.get(k).toString()));
+		/**/	}
 	}
 
 	public void reduce(Reader reader, Writer writer) {
