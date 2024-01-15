@@ -1,6 +1,8 @@
 package daemon;
 
 import java.io.FileNotFoundException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +33,17 @@ public class JobLauncher {
 		frw.setFname(fname);
 
 		// Initialise le NetworkReaderWriter
-		NetworkReaderWriter nrw = new NetworkReaderWriterImpl(null, null);
-		nrw.openServer();
+		InetAddress addr;
+		NetworkReaderWriter nrw = null;
+    	try {
+			addr = InetAddress.getLocalHost();
+			nrw = new NetworkReaderWriterImpl(4000, addr.getHostName());
+			nrw.openServer();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 
 		// Lance les map
 		for (KV node : nodes) {
