@@ -27,12 +27,12 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         reader.setFname(pathToServerDir.resolve(fileRealName).toString());
 
         reader.open(AccessMode.READ);
-        // TODO ouvre le writer ?
+        writer.openClient();
 
         m.map(reader, writer);
 
         reader.close();
-        // TODO close le writer ?
+        writer.closeClient();
     }
 
     public static void main(String[] args) {
