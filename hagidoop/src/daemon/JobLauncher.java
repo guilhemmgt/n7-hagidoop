@@ -36,11 +36,11 @@ public class JobLauncher {
 		InetAddress addr;
 		NetworkReaderWriter nrw = null;
     	try {
-			addr = InetAddress.getLocalHost();
-			nrw = new NetworkReaderWriterImpl(4000, addr.getHostName());
+			addr = InetAddress.getLocalHost(); 
+			String hostName = addr.getHostName().split(".")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne souhaite récupérer que vador
+			nrw = new NetworkReaderWriterImpl(4000, hostName);
 			nrw.openServer();
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

@@ -65,6 +65,10 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
+    public List<Thread> getReceivers(){
+        return receiverThreads;
+    }
+
     /**
      * Ouvre la connexion client.
      */

@@ -33,11 +33,8 @@ public class TestProject {
         try {
             InetAddress inetadd = InetAddress.getLocalHost();
             String name = inetadd.getHostName();
-            String address = inetadd.getHostAddress();
             System.out.println("HostName is : " + name);
-            System.out.println("Host Address is: " + address);
         } catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
