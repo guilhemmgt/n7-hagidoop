@@ -17,11 +17,13 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private Socket socket;
+    private ServerSocket serverSocket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private ServerSocket serverSocket;
     private BlockingQueue<KV> sharedQueue;
     private List<Thread> receiverThreads = new ArrayList<>();
+    private int port;
+    private String host;
 
     /**
      * Constructeur pour initialiser NetworkReaderWriterImpl avec un Socket et un
@@ -30,12 +32,9 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      * @param socket       Le socket client.
      * @param serverSocket Le socket serveur.
      */
-    public NetworkReaderWriterImpl(Socket socket, ServerSocket serverSocket) {
+    public NetworkReaderWriterImpl(Socket socket) {
         this.socket = socket;
-        this.serverSocket = serverSocket;
         this.sharedQueue = new LinkedBlockingQueue<>();
-        openClient();
-        openServer();
         try {
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -44,12 +43,22 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
+    public NetworkReaderWriterImpl(int port, String host){
+        this.port = port;
+        this.host = host;
+        this.sharedQueue = new LinkedBlockingQueue<>();
+    }
+
     /**
      * Ouvre le serveur pour les connexions entrantes.
      */
     @Override
     public void openServer() {
-        // Déjà dans le constructeur ?
+        try {
+            this.serverSocket = new ServerSocket(port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -57,7 +66,13 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void openClient() {
-        // Déjà dans le constructeur ?
+        try {
+            Socket socket = new Socket(host, port);
+            this.objectInputStream = new ObjectInputStream(socket.getInputStream());
+            this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -73,7 +88,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         // NetworkReaderWriterImpl
         try {
             Socket clientSocket = serverSocket.accept();
-            NetworkReaderWriterImpl newConnection = new NetworkReaderWriterImpl(clientSocket, serverSocket);
+            NetworkReaderWriterImpl newConnection = new NetworkReaderWriterImpl(clientSocket);
 
             // Créer un nouveau thread Receiver pour la nouvelle connexion et l'ajouter dans
             // la liste
