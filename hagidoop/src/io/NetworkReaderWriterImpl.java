@@ -16,8 +16,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * sur un réseau.
  */
 public class NetworkReaderWriterImpl implements NetworkReaderWriter {
-    private Socket socket;
-    private ServerSocket serverSocket;
+    private transient Socket socket;
+    private transient ServerSocket serverSocket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     public static BlockingQueue<KV> sharedQueue;
@@ -75,9 +75,13 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     @Override
     public void openClient() {
         try {
+            System.out.println("openinggg client...");
             this.socket = new Socket(host, port);
+            System.out.println("new Socket " + host + ":" + port + " ... " + socket.toString());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
+            System.out.println("new ObjectInputStream");
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            System.out.println("client opened !");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -184,10 +188,13 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     @Override
     public void write(KV record) {
+        System.out.println("coucou");
         // Écriture d'un objet KV dans le flux de sortie
         try {
             objectOutputStream.writeObject(record);
+            System.out.println("objectOutputStream.writeObject(record);");
             objectOutputStream.flush();
+            System.out.println("objectOutputStream.flush();");
         } catch (IOException e) {
             e.printStackTrace();
         }

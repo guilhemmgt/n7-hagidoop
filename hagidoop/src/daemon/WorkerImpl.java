@@ -1,5 +1,6 @@
 package daemon;
 
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.Naming;
@@ -23,16 +24,21 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
 
     @Override
     public void runMap(Map m, FileReaderWriter reader, NetworkReaderWriter writer) throws RemoteException {
+        System.out.println("EHOH JE SUIS LA");
+        
         String fileRealName = Paths.get(reader.getFname()).getFileName().toString(); // Le nom du fichier
         reader.setFname(pathToServerDir.resolve(fileRealName).toString());
 
         reader.open(AccessMode.READ);
+        System.out.println("TOTOTOTOTOTOTOTTO");
         writer.openClient();
+        System.out.println("tata");
 
         m.map(reader, writer);
 
         reader.close();
         writer.closeClient();
+        
     }
 
     public static void main(String[] args) {
@@ -41,7 +47,8 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
 
         try {
             LocateRegistry.createRegistry(port);
-            Naming.bind("//melofee:" + port + "/worker", new WorkerImpl());
+            Naming.bind("//" + InetAddress.getLocalHost().getHostName().split("\\.")[0] + ":" + port + "/worker", new WorkerImpl());
+            
         }
         catch (Exception e) {
             e.printStackTrace();
