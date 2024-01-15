@@ -14,7 +14,8 @@ public class TestProject {
 
     public static void main(String[] args) {
         // testConfig();
-        testMachineName();
+        // testMachineName();
+        testSplit();
     }
 
     public static void testConfig() {
@@ -37,5 +38,10 @@ public class TestProject {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void testSplit() {
+        String testString = "vador.enseeiht.fr";
+        System.out.println(testString.split("\\.").toString());
     }
 }
