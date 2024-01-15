@@ -42,6 +42,11 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         }
     }
 
+    /**
+     * Constructeur 
+     * @param port numéro de port
+     * @param host adresse
+     */
     public NetworkReaderWriterImpl(int port, String host){
         this.port = port;
         this.host = host;
@@ -66,7 +71,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     @Override
     public void openClient() {
         try {
-            Socket socket = new Socket(host, port);
+            this.socket = new Socket(host, port);
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         } catch (IOException e) {
@@ -116,6 +121,8 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
             if (serverSocket != null) {
                 serverSocket.close();
             }
+            // On arrête les threads
+            stopReceiverThreads();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -128,6 +135,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public void closeClient() {
         // Fermer la connexion client
         try {
+            objectOutputStream.close();
             if (socket != null) {
                 socket.close();
             }
@@ -186,11 +194,6 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         write(new KV(null, null));
     }
 
-    // Méthode pour obtenir la référence de la BlockingQueue
-    public BlockingQueue<KV> getQueue() {
-        return sharedQueue;
-    }
-
     // Classe interne pour le Receiver (thread)
     private class Receiver implements Runnable {
         private NetworkReaderWriterImpl connection;
@@ -206,7 +209,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
                 KV kv = connection.read();
                 if (kv == null || (kv.k == null && kv.v == null)) {
                     // Fin de la lecture, ajouter le marqueur de fin dans la queue
-                    connection.signalEnd();  // Ajouter cet appel pour signaler explicitement la fin
+                    connection.signalEnd();
                     break;
                 } else {
                     sharedQueue.offer(kv);
