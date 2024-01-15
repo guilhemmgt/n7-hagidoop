@@ -41,7 +41,7 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
 
         try {
             LocateRegistry.createRegistry(port);
-            Naming.bind("//localhost:" + port + "/worker", new WorkerImpl());
+            Naming.bind("//melofee:" + port + "/worker", new WorkerImpl());
         }
         catch (Exception e) {
             e.printStackTrace();

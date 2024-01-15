@@ -20,7 +20,7 @@ import io.NetworkReaderWriterImpl;
 public class JobLauncher {
 
 	public static NetworkReaderWriterImpl nrwMain;
-	public static List<Thread> threads;
+	public static List<Thread> threads = new ArrayList<Thread>();
 
 	public static void startJob(MapReduce mr, int format, String fname) {
 		// Récupère les noeuds via le fichier config
@@ -40,18 +40,22 @@ public class JobLauncher {
 		InetAddress addr;
 		try {
 			addr = InetAddress.getLocalHost();
-			String hostName = addr.getHostName().split(".")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne
+			String hostName = addr.getHostName().split("\\.")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne
 																// souhaite récupérer que vador
-			nrwMain = new NetworkReaderWriterImpl(4000, hostName);
+			nrwMain = new NetworkReaderWriterImpl(4500, hostName);
 			nrwMain.openServer();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 
 		// Lance les map
+		System.out.println("lance les maps");
 		for (KV node : nodes) {
+			System.out.println("map noeud " + node.k + ":" + node.v);
 			try {
-				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + node.v + "/worker");
+				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + (Integer.parseInt(node.v)+1) + "/worker");
+
+				System.out.println("avant");
 
 				Thread t1 = new Thread(new Runnable() {
 					@Override
@@ -81,7 +85,7 @@ public class JobLauncher {
 		}
 
 		// récupérer les KV envoyés au reduce
-		System.out.println(NetworkReaderWriterImpl.sharedQueue.toArray());
+		System.out.println(NetworkReaderWriterImpl.sharedQueue.toArray().toString());
 
 		// Ferme le NetworkReaderWriter
 		nrwMain.closeServer();
