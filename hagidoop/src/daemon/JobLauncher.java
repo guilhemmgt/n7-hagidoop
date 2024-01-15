@@ -57,18 +57,8 @@ public class JobLauncher {
 
 				System.out.println("avant");
 
-				Thread t1 = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							s.runMap(mr, frw, nrwMain);
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						}
-					}
-				});
-				threads.add(t1);
-				t1.start();
+				WorkerThread workerThread = new WorkerThread();
+				workerThread.init(mr, frw, nrwMain, s);
 
 			} catch (Exception e) {
 				e.printStackTrace();
