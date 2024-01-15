@@ -20,7 +20,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     private ServerSocket serverSocket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
-    private BlockingQueue<KV> sharedQueue;
+    public static BlockingQueue<KV> sharedQueue;
     private List<Thread> receiverThreads = new ArrayList<>();
     private int port;
     private String host;
@@ -34,7 +34,6 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
      */
     public NetworkReaderWriterImpl(Socket socket) {
         this.socket = socket;
-        this.sharedQueue = new LinkedBlockingQueue<>();
         try {
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -46,7 +45,7 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public NetworkReaderWriterImpl(int port, String host){
         this.port = port;
         this.host = host;
-        this.sharedQueue = new LinkedBlockingQueue<>();
+        sharedQueue = new LinkedBlockingQueue<>();
     }
 
     /**
