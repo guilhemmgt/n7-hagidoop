@@ -1,10 +1,9 @@
 SP='../src/'
-BIN='../bin/'
 cd $SP
-javac -d $BIN $SP/hdfs/*.java 
-javac -d $BIN $SP/application/*.java
-javac -d $BIN $SP/config/*.java
-javac -d $BIN $SP/daemon/*.java
-javac -d $BIN $SP/interfaces/*.java
-javac -d $BIN $SP/io/*.java
-javac -d $BIN $SP/tests/*.java
+javac $SP/hdfs/*.java 
+javac $SP/application/*.java
+javac $SP/config/*.java
+javac $SP/daemon/*.java
+javac $SP/interfaces/*.java
+javac $SP/io/*.java
+javac $SP/tests/*.java
