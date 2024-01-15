@@ -86,7 +86,7 @@ public class HdfsClient {
 		frw.open(AccessMode.READ);
 	
 		String fileRealName = Paths.get(fname).getFileName().toString(); // Le nom du fichier
-		long sizePerNode = Math.ceilDiv(frw.getFsize(), nodes.size()); // Bytes à écrire par noeud
+		long sizePerNode = (long)Math.ceil(frw.getFsize() / nodes.size()); // Bytes à écrire par noeud
 		long written = 0; // Bytes écrits sur tous les noeuds
 		int nodeIndex = 0; // Noeud courant
 
@@ -98,6 +98,7 @@ public class HdfsClient {
 				// Si pas de socket ouvert, création d'un socket
 				if (recepteur == null || recepteur.isClosed()) {
 					KV node = nodes.get(nodeIndex); // noeud sur lequel écrire: host<->port
+					System.out.println(node.toString());
 					recepteur = new Socket (node.k, Integer.parseInt(node.v));
 					recepteur_out = recepteur.getOutputStream ();
 
