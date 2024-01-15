@@ -53,12 +53,16 @@ public class JobLauncher {
 		for (KV node : nodes) {
 			System.out.println("map noeud " + node.k + ":" + node.v);
 			try {
-				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + (Integer.parseInt(node.v)+1) + "/worker");
+				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + (Integer.parseInt(node.v)+1) + "/worker");;
 
-				System.out.println("avant");
-
+				System.out.println("1");
 				WorkerThread workerThread = new WorkerThread();
 				workerThread.init(mr, frw, nrwMain, s);
+				System.out.println("2");
+				Thread thread = new Thread(workerThread);
+				threads.add(thread);
+				System.out.println("3");
+				thread.start();
 
 			} catch (Exception e) {
 				e.printStackTrace();
