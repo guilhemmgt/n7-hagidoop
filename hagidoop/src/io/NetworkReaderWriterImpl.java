@@ -16,8 +16,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * sur un réseau.
  */
 public class NetworkReaderWriterImpl implements NetworkReaderWriter {
-    private Socket socket;
-    private ServerSocket serverSocket;
+    private transient Socket socket;
+    private transient ServerSocket serverSocket;
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     public static BlockingQueue<KV> sharedQueue;
