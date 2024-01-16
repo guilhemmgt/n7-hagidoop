@@ -22,7 +22,7 @@ public class JobLauncher {
 		frw.setFname(fname);
 
 		// Initialise le NRW
-		nrwMain = new NetworkReaderWriterImpl(4500);
+		nrwMain = new NetworkReaderWriterImpl(4500); // /!\ port codé en dur
 
 		// Lance les map sur des threads
 		for (KV node : nodes) {
