@@ -1,2 +1,12 @@
-localhost 4000
-localhost 5000
+pikachu 4321
+melofee 4321
+salameche 4321
+carapuce 4321
+carpe 4321
+perche 4321
+ablette 4321
+tanche 4321
+truite 4321
+silure 4321
+daurade 4321
+gobie 4321

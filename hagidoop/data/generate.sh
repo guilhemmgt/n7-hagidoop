@@ -1,9 +1,11 @@
-cp $1 /tmp/data.txt
+cp $1 /work/tmp/data.txt
 
 # generate 2^$2 times file $1
-for ((n=0;n<$2;n++))
-do
-cat /tmp/data.txt /tmp/data.txt > /tmp/temp
-mv /tmp/temp /tmp/data.txt
+n=1
+while [ "$n" -le $2 ]; do
+echo "$n"
+cat /work/tmp/data.txt /work/tmp/data.txt > /work/tmp/temp
+mv /work/tmp/temp /work/tmp/data.txt
+n=$(( n + 1 ))
 done
-mv /tmp/data.txt .
+mv /work/tmp/data.txt /work

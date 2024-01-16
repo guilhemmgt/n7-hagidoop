@@ -6,4 +6,4 @@ while IFS=" " read -r host port; do
     pidToKill=\$(ps -x | grep \"java daemon.WorkerImpl\");
     pid=\$(echo \$pidToKill | cut -d' ' -f 1);
     kill -9 \$pid;" &
-done < /home/gmangeno/2A/Donnees-reparties-main/hagidoop/config/config.txt
+done < /home/gmangeno/2A/Donnees-reparties/hagidoop/config/config.txt
