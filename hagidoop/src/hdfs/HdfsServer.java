@@ -30,7 +30,7 @@ public class HdfsServer implements Runnable {
         try {
             ServerSocket ss = new ServerSocket(port);
 
-            System.out.println("Worker créé. Port: " + port + ", répertoire: " + pathToServerDir);
+            System.out.println("HDFS Serveur créé. Port: " + port + ", répertoire: " + pathToServerDir);
 
             while (true) {
                 new Thread(new HdfsServer(ss.accept())).start();
