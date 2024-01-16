@@ -82,7 +82,6 @@ public class HdfsClient {
 				// Si pas de socket ouvert, création d'un socket
 				if (recepteur == null || recepteur.isClosed()) {
 					KV node = nodes.get(nodeIndex); // noeud sur lequel écrire: host<->port
-					System.out.println(node.toString());
 					recepteur = new Socket (node.k, Integer.parseInt(node.v));
 					recepteur_out = recepteur.getOutputStream ();
 
