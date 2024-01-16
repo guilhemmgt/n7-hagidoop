@@ -8,31 +8,29 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import config.Project;
-import hdfs.HdfsClient;
 
 /**
  * Implémentation de l'interface NetworkReaderWriter pour gérer la communication
  * sur un réseau.
  */
 public class NetworkReaderWriterImpl implements NetworkReaderWriter {
-    private transient Socket socket;
-    private transient ServerSocket serverSocket;
-    private ObjectOutputStream objectOutputStream;
-    public static BlockingQueue<KV> sharedQueue;
-    private int port;
-    private String host;
-    private List<Thread> inputReaderThreads = new ArrayList<>();
+    private String host; // nom de la machine
+    private int port; // numéro de port
+
+    private transient Socket socket; // pour les NRW clients
+    private ObjectOutputStream objectOutputStream; // pour les NRW clients
+    private transient ServerSocket serverSocket; // pour le NRW principal
+
+    public static BlockingQueue<KV> sharedQueue; // queue commune
 
     /**
-     * Constructeur des clients
+     * Constructeur du NRW principal
      * 
-     * @param port port
+     * @param port numéro de port
      */
     public NetworkReaderWriterImpl(int port) {
         try {
@@ -51,9 +49,10 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     }
 
     /**
-     * Constructeur des clients
-     * @param port numéro de port
+     * Constructeur des NRW des clients
+     * 
      * @param host adresse
+     * @param port numéro de port
      */
     public NetworkReaderWriterImpl(String host, int port){
         this.port = port;
@@ -61,23 +60,14 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     }
 
 
-
-
     /**
      * Ouvre le serveur pour les connexions entrantes.
      */
     @Override
     public void openServer() {
-        // Récupère les noeuds via le fichier config
-		int nbNodes = 0;
-		try {
-			nbNodes = Project.getConfig(HdfsClient.CONFIGNAME).size();
-		} catch (FileNotFoundException e) {
-			System.out.println("Fichier de configuration non trouvé: " + HdfsClient.CONFIGNAME);
-			return;
-		}
+		int nbNodes = Project.getConfig().size(); // Nombre de noeuds
 
-        // Récupère toutes les sockets
+        // Récupère toutes les sockets envoyées par les NRW des clients
         Socket[] sockets = new Socket[nbNodes];
         try {
             for (int i = 0; i < nbNodes; i++) {
@@ -87,15 +77,12 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
             e.printStackTrace();
         }
 
-        // Récupère les KV des sockets et les mets dans la queue
+        // Récupère les KV de ces sockets et les mets dans la queue
         for (int i = 0; i < nbNodes; i++) {
             InputReader ir = new InputReader (sockets[i]);
-            Thread t = new Thread(ir);
-            inputReaderThreads.add(t);
-            t.start();
+            new Thread(ir).start();
         }
     }
-
 
     /**
      * Ferme le serveur et ServerSocket.
@@ -151,17 +138,12 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     }
 
     /**
-     * Accepte une connexion entrante et retourne un nouvel objet
-     * NetworkReaderWriterImpl pour la communication.
+     * Accepte une connexion entrante d'une client et retourne un nouvel NRW
      *
-     * @return Une nouvelle instance de NetworkReaderWriterImpl pour le client
-     *         accepté.
+     * @return Une nouvelle instance de NRW pour le client accepté.
      */
     @Override
     public NetworkReaderWriter accept() {
-        // Accepter une connexion entrante et retourner un nouvel objet
-        // NetworkReaderWriterImpl
-        System.out.println("accept: " + host + ":" + port);
         return new NetworkReaderWriterImpl(host, port);
     }
 
@@ -174,11 +156,9 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public KV read() {
         try {
             KV read = sharedQueue.take();
-            if (read.k == null && read.v == null) {
-                System.out.println("read: finito");
-                return null;
-            }
-            System.out.println("read: " + read.toString());
+            // Si KV = null<->null, signal pour dire que la queue est remplie
+            if (read.k == null && read.v == null)
+                read = null;
             return read;
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -195,14 +175,11 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public void write(KV record) {
         // Écriture d'un objet KV dans le flux de sortie
         try {
-            System.out.println("write: " + record.toString());
             objectOutputStream.writeObject(record);
-            //objectOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 
 
     // Mettre les KV d'un Socket dans la queue
@@ -225,7 +202,6 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
                         NetworkReaderWriterImpl.sharedQueue.add(kv);
                     }
                 } catch (EOFException e) {
-                    System.out.println("finito");
                     // Signale que la queue est remplie
                     NetworkReaderWriterImpl.sharedQueue.add(new KV(null, null));
                 }

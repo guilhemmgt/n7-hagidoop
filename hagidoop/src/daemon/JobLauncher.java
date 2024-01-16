@@ -1,79 +1,56 @@
 package daemon;
 
-import java.io.FileNotFoundException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 
 import config.Project;
-import hdfs.HdfsClient;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
 import interfaces.MapReduce;
-import interfaces.NetworkReaderWriter;
 import io.AccessMode;
 import io.FileReaderWriteImpl;
 import io.NetworkReaderWriterImpl;
 
 public class JobLauncher {
-
-	public static NetworkReaderWriterImpl nrwMain;
-	public static List<Thread> threads = new ArrayList<Thread>();
+	public static NetworkReaderWriterImpl nrwMain; // NRW principal: il ne servira qu'à accept et ne fera pas transiter de données lui même
 
 	public static void startJob(MapReduce mr, int format, String fname) {
-		// Récupère les noeuds via le fichier config
-		List<KV> nodes = new ArrayList<KV>();
-		try {
-			nodes = Project.getConfig(HdfsClient.CONFIGNAME);
-		} catch (FileNotFoundException e) {
-			System.out.println("Fichier de configuration non trouvé: " + HdfsClient.CONFIGNAME);
-			return;
-		}
+		List<KV> nodes = Project.getConfig(); // Noeuds
 
-		// Initialise le FileReaderWriter
+		// Initialise le FRW
 		FileReaderWriter frw = new FileReaderWriteImpl(FileReaderWriter.FMT_KV);
 		frw.setFname(fname);
 
-		// Initialise le NetworkReaderWriter
-		try {
-			String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne
-																// souhaite récupérer que vador
-			nrwMain = new NetworkReaderWriterImpl(4500); /* SI ÇA MARCHE PAS, REMPLACER hostName PAR LE NOM DE LA MACHINE EN DUR */
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+		// Initialise le NRW
+		nrwMain = new NetworkReaderWriterImpl(4500);
 
-		// Lance les map
-		System.out.println("lance les maps");
+		// Lance les map sur des threads
 		for (KV node : nodes) {
-			System.out.println("map noeud " + node.k + ":" + node.v);
 			try {
+				// Récupère le Worker (RMI)
 				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + (Integer.parseInt(node.v)+1) + "/worker");;
 
+				// Lance un thread lançant le runMap du Worker
 				WorkerThread workerThread = new WorkerThread();
 				workerThread.init(mr, frw, nrwMain, s);
-
-				Thread thread = new Thread(workerThread);
-				threads.add(thread);
-				thread.start();
-
+				new Thread(workerThread).start();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
+		// Ouvre le FRW en écriture
 		frw.close();
 		frw.open(AccessMode.WRITE);
 
+		// Ouvre le NRW pour permettre la lecture
 		nrwMain.openServer();
 
+		// Reduce
 		mr.reduce(nrwMain, frw);
 
+		// Fermeture des RW
 		nrwMain.closeServer();
-
 		frw.close();
 	}
 }

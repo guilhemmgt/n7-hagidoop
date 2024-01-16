@@ -16,7 +16,7 @@ import io.FileReaderWriteImpl;
 public class HdfsServer implements Runnable {
     private Socket s;
     private static FileReaderWriter frw = new FileReaderWriteImpl(FileReaderWriter.FMT_TXT);
-    private static Path pathToServerDir;
+    private static Path pathToServerDir; // Répertoire du noeud, où il stocke ses fragments
 
     private HdfsServer(Socket s) {
         this.s = s;
@@ -29,6 +29,8 @@ public class HdfsServer implements Runnable {
     private static void Start(int port) {
         try {
             ServerSocket ss = new ServerSocket(port);
+
+            System.out.println("Worker créé. Port: " + port + ", répertoire: " + pathToServerDir);
 
             while (true) {
                 new Thread(new HdfsServer(ss.accept())).start();
@@ -73,6 +75,11 @@ public class HdfsServer implements Runnable {
         }
     }
 
+    /**
+     * Créé le fragment correspondant à ce fichier et ouvre le FRW en écriture dessus
+     * 
+     * @param fileName
+     */
     private void SetFile(String fileName) {
         // Accède au fichier du fragment
         Path pathToFragment = pathToServerDir.resolve(fileName);
@@ -89,6 +96,11 @@ public class HdfsServer implements Runnable {
         frw.open(AccessMode.WRITE);
     }
 
+    /**
+     * Supprime le fragment correspondant à ce fichier
+     * 
+     * @param fileName
+     */
     private void DeleteFile(String fileName) {
         // Accède au fichier du fragment
         Path pathToFragment = pathToServerDir.resolve(fileName);

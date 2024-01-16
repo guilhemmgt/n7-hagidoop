@@ -24,7 +24,6 @@ public class WorkerThread implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.println("running map");
             worker.runMap(map, reader, writer.accept());
         } catch (RemoteException e) {
             e.printStackTrace();

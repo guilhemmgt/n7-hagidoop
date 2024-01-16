@@ -3,12 +3,10 @@ package hdfs;
 import io.AccessMode;
 import io.FileReaderWriteImpl;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import config.Project;
@@ -19,8 +17,6 @@ public class HdfsClient {
 	// La première ligne de chaque socket envoyée à un HdfsServer lui indique la nature de la requête
 	public static final String WRITE_RQ = "WRITE:";
 	public static final String DELETE_RQ = "DELETE:";
-	
-	public static final String CONFIGNAME = "/config.txt";
 
 	private static FileReaderWriter frw = new FileReaderWriteImpl(FileReaderWriter.FMT_TXT);
 
@@ -36,26 +32,21 @@ public class HdfsClient {
 	 * @param fname : fichier à effacer
 	 */
 	public static void HdfsDelete(String fname) {
-		// Récupère les noeuds via le fichier config
-		List<KV> nodes = new ArrayList<KV>();
-		try {
-			nodes = Project.getConfig(CONFIGNAME);
-		} catch (FileNotFoundException e) {
-			System.out.println("Fichier de configuration non trouvé: " + CONFIGNAME);
-			return;
-		}
-
-		String fileRealName = Paths.get(fname).getFileName().toString(); // Le nom du fichier
+		List<KV> nodes = Project.getConfig(); 
+		String fileRealName = Paths.get(fname).getFileName().toString(); // Nom du fichier
 
 		for (int i = 0; i <  nodes.size(); i++) {
 			try {
+				// Créer un socket vers le noeud
 				KV node = nodes.get(i);
 				Socket recepteur = new Socket (node.k, Integer.parseInt(node.v));
 				OutputStream recepteur_out = recepteur.getOutputStream ();
 
+				// Envoie une requête de supression du fichier
 				byte[] buffer = (DELETE_RQ + fileRealName + "\n").getBytes();
 				recepteur_out.write (buffer, 0, buffer.length);
 				
+				// Ferme la socket
 				recepteur.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -72,14 +63,7 @@ public class HdfsClient {
 	 * @param fname : fichier lu sur le système de fichiers local
 	 */
 	public static void HdfsWrite(int fmt, String fname) {
-		// Récupère les noeuds via le fichier config
-		List<KV> nodes = new ArrayList<KV>();
-		try {
-			nodes = Project.getConfig(CONFIGNAME);
-		} catch (FileNotFoundException e) {
-			System.out.println("Fichier de configuration non trouvé: " + CONFIGNAME);
-			return;
-		}
+		List<KV> nodes = Project.getConfig(); // Noeuds de HDFS
 
 		// Ouvre le fichier en lecture
 		frw.setFname(fname);
@@ -130,7 +114,14 @@ public class HdfsClient {
 		frw.close();
 	}
 
+	/**
+	 * Permet de lire un fichier à partir de HDFS. Les fragments du fichier sont lus à partir des
+	 * différentes machines, concaténés et stockés localement dans un fichier de nom fname
+	 * 
+	 * @param fname
+	 */
 	public static void HdfsRead(String fname) {
+		System.out.println("pas implementé");
 	}
 
 	public static void main(String[] args) {
