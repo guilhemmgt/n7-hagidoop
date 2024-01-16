@@ -1,5 +1,0 @@
-Serveur créé
-EHOH JE SUIS LA
-TOTOTOTOTOTOTOTTO
-openinggg client...
-new Socket brassens:4500 ... Socket[addr=brassens/147.127.135.66,port=4500,localport=54090]

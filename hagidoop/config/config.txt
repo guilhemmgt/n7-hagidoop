@@ -1,3 +1,2 @@
-melofee 4555
-pikachu 5555
-salameche 6555
+localhost 4000
+localhost 5000

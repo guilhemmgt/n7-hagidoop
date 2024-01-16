@@ -29,7 +29,6 @@ public class MyMapReduce implements MapReduce {
 		// TODO enlever ça
 		/**/	for (String k : hm.keySet()) {
 		/**/		System.out.println("MYMAPREDUCE writing: " + new KV(k,hm.get(k).toString()));
-					System.out.println("MYMAPREDUCE Writer: " + writer.toString());
 		/**/		writer.write(new KV(k,hm.get(k).toString()));
 		/**/	}
 	}

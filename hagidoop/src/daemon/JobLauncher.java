@@ -37,13 +37,10 @@ public class JobLauncher {
 		frw.setFname(fname);
 
 		// Initialise le NetworkReaderWriter
-		InetAddress addr;
 		try {
-			addr = InetAddress.getLocalHost();
-			String hostName = addr.getHostName().split("\\.")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne
+			String hostName = InetAddress.getLocalHost().getHostName().split("\\.")[0]; // addr.getHostName() renvoie vador.enseeiht.fr, on ne
 																// souhaite récupérer que vador
-			nrwMain = new NetworkReaderWriterImpl(4500, hostName);
-			nrwMain.openServer();
+			nrwMain = new NetworkReaderWriterImpl(4500); /* SI ÇA MARCHE PAS, REMPLACER hostName PAR LE NOM DE LA MACHINE EN DUR */
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -55,13 +52,11 @@ public class JobLauncher {
 			try {
 				Worker s = (Worker) Naming.lookup("//" + node.k + ":" + (Integer.parseInt(node.v)+1) + "/worker");;
 
-				System.out.println("1");
 				WorkerThread workerThread = new WorkerThread();
 				workerThread.init(mr, frw, nrwMain, s);
-				System.out.println("2");
+
 				Thread thread = new Thread(workerThread);
 				threads.add(thread);
-				System.out.println("3");
 				thread.start();
 
 			} catch (Exception e) {
@@ -69,19 +64,10 @@ public class JobLauncher {
 			}
 		}
 
-		// Attendre que tous les maps soient terminés
-		for(Thread thr : threads){
-			try {
-				thr.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		nrwMain.openServer();
 
-		// récupérer les KV envoyés au reduce
-		System.out.println(NetworkReaderWriterImpl.sharedQueue.toArray().toString());
+		mr.reduce(nrwMain, frw);
 
-		// Ferme le NetworkReaderWriter
 		nrwMain.closeServer();
 	}
 }

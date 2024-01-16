@@ -30,9 +30,7 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         reader.setFname(pathToServerDir.resolve(fileRealName).toString());
 
         reader.open(AccessMode.READ);
-        System.out.println("TOTOTOTOTOTOTOTTO");
         writer.openClient();
-        System.out.println("tata");
 
         m.map(reader, writer);
 
