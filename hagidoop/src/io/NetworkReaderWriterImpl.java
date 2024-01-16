@@ -104,18 +104,6 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public void closeServer() {
         // Fermeture du serveur et du ServerSocket
         try {
-            // Attend la fin des threads InputReader, i.e. que la queue soit remplie
-            for (Thread thr : inputReaderThreads){
-                try {
-                    thr.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Signale que la queue est remplie
-            sharedQueue.add(null);
-
             // Ferme socket et serverSocket
             if (socket != null) {
                 socket.close();
@@ -186,6 +174,10 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
     public KV read() {
         try {
             KV read = sharedQueue.take();
+            if (read.k == null && read.v == null) {
+                System.out.println("read: finito");
+                return null;
+            }
             System.out.println("read: " + read.toString());
             return read;
         } catch (InterruptedException e) {
@@ -224,12 +216,18 @@ public class NetworkReaderWriterImpl implements NetworkReaderWriter {
         @Override
         public void run() {
             try {
-                InputStream stream = socket.getInputStream();
+                InputStream stream = s.getInputStream();
                 ObjectInputStream objectInputStream = new ObjectInputStream(stream);
 
-                KV kv;
-                while ((kv = (KV)objectInputStream.readObject()) != null) {
-                    NetworkReaderWriterImpl.sharedQueue.add(kv);
+                try {
+                    KV kv;
+                    while ((kv = (KV)objectInputStream.readObject()) != null) {
+                        NetworkReaderWriterImpl.sharedQueue.add(kv);
+                    }
+                } catch (EOFException e) {
+                    System.out.println("finito");
+                    // Signale que la queue est remplie
+                    NetworkReaderWriterImpl.sharedQueue.add(new KV(null, null));
                 }
 
                 objectInputStream.close();

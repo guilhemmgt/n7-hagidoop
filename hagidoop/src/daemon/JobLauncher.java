@@ -14,6 +14,7 @@ import interfaces.FileReaderWriter;
 import interfaces.KV;
 import interfaces.MapReduce;
 import interfaces.NetworkReaderWriter;
+import io.AccessMode;
 import io.FileReaderWriteImpl;
 import io.NetworkReaderWriterImpl;
 
@@ -64,10 +65,15 @@ public class JobLauncher {
 			}
 		}
 
+		frw.close();
+		frw.open(AccessMode.WRITE);
+
 		nrwMain.openServer();
 
 		mr.reduce(nrwMain, frw);
 
 		nrwMain.closeServer();
+
+		frw.close();
 	}
 }
